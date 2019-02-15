@@ -2,7 +2,7 @@
  * @Author: mikey.zhaopeng 
  * @Date: 2019-02-15 16:36:21 
  * @Last Modified by: mikey.zhaopeng
- * @Last Modified time: 2019-02-15 20:43:05
+ * @Last Modified time: 2019-02-15 20:53:35
  */
 
 var gulp = require('gulp'); //载入模块
@@ -27,10 +27,28 @@ gulp.task('conScss', function() {
 })
 
 gulp.task('auto', function() {
-    return gulp.watch('./src/style/**/*.scss', gulp.series("conScss"))
-})
-
-//压缩css
+        return gulp.watch('./src/style/**/*.scss', gulp.series("conScss"))
+    })
+    //开启服务
+gulp.task('srcserver', function() {
+        return gulp.src('src')
+            .pipe(server({
+                host: "169.254.149.0",
+                port: 3030,
+                livereload: true,
+                middleware: function(req, res, next) {
+                    var pathname = url.parse(req.url).pathname;
+                    if (pathname === "./api/list") {
+                        res.end(JSON.stringify({ code: 1, msg: data }))
+                    } else {
+                        pathname = pathname === "/" ? "index.html" : pathname;
+                        var upath = path.join(__dirname, "src", pathname);
+                        res.end(fs.readFileSync(upath))
+                    }
+                }
+            }))
+    })
+    //压缩css
 gulp.task("zipcss", function() {
         return gulp.src('./src/style/**/*.scss')
             .pipe(mincss())
@@ -38,25 +56,9 @@ gulp.task("zipcss", function() {
     })
     //压缩js
 gulp.task("zipjs", function() {
-    return gulp.src('./src/js/**/*.js')
-        .pipe(uglify())
-        .pipe(gulp.dest("./build/js"))
-})
-gulp.task('srcserver', function() {
-    return gulp.src('src')
-        .pipe(server({
-            host: "169.254.149.0",
-            port: 3030,
-            livereload: true,
-            middleware: function(req, res, next) {
-                var pathname = url.parse(req.url).pathname;
-                if (pathname === "./api/list") {
-                    res.end(JSON.stringify({ code: 1, msg: data }))
-                } else {
-                    pathname = pathname === "/" ? "index.html" : pathname;
-                    var upath = path.join(__dirname, "src", pathname);
-                    res.end(fs.readFileSync(upath))
-                }
-            }
-        }))
-})
+        return gulp.src('./src/js/**/*.js')
+            .pipe(uglify())
+            .pipe(gulp.dest("./build/js"))
+    })
+    //文件打包到build
+gulp.task("build", gulp.parallel("zipcss", "zipjs"))
