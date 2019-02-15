@@ -2,7 +2,7 @@
  * @Author: mikey.zhaopeng 
  * @Date: 2019-02-15 16:36:21 
  * @Last Modified by: mikey.zhaopeng
- * @Last Modified time: 2019-02-15 20:09:18
+ * @Last Modified time: 2019-02-15 20:43:05
  */
 
 var gulp = require('gulp'); //载入模块
@@ -41,4 +41,22 @@ gulp.task("zipjs", function() {
     return gulp.src('./src/js/**/*.js')
         .pipe(uglify())
         .pipe(gulp.dest("./build/js"))
+})
+gulp.task('srcserver', function() {
+    return gulp.src('src')
+        .pipe(server({
+            host: "169.254.149.0",
+            port: 3030,
+            livereload: true,
+            middleware: function(req, res, next) {
+                var pathname = url.parse(req.url).pathname;
+                if (pathname === "./api/list") {
+                    res.end(JSON.stringify({ code: 1, msg: data }))
+                } else {
+                    pathname = pathname === "/" ? "index.html" : pathname;
+                    var upath = path.join(__dirname, "src", pathname);
+                    res.end(fs.readFileSync(upath))
+                }
+            }
+        }))
 })
